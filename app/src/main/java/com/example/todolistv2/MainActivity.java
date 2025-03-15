@@ -9,9 +9,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private TaskViewModel taskViewModel;
+    private TaskAdapter taskAdapter;
+    private List<Task> taskList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,24 +25,31 @@ public class MainActivity extends AppCompatActivity {
         taskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        final TaskAdapter adapter = new TaskAdapter(new TaskAdapter.TaskDiff(), new TaskAdapter.OnTaskInteractionListener() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        taskAdapter = new TaskAdapter(taskList, new TaskAdapter.OnTaskClickListener() {
             @Override
             public void onTaskCompleted(Task task, boolean isCompleted) {
                 task.setCompleted(isCompleted);
                 taskViewModel.update(task);
+                taskAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onTaskDeleted(Task task) {
+                taskList.remove(task);
                 taskViewModel.delete(task);
+                taskAdapter.notifyDataSetChanged();
             }
         });
 
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(taskAdapter);
 
+        // Подписка на изменения в базе данных
         taskViewModel.getAllTasks().observe(this, tasks -> {
-            adapter.submitList(tasks);
+            taskList.clear();
+            taskList.addAll(tasks);
+            taskAdapter.notifyDataSetChanged();
         });
 
         Button buttonAddTask = findViewById(R.id.buttonAddTask);
@@ -69,4 +80,3 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 }
-

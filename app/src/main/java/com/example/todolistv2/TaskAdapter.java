@@ -7,21 +7,15 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.List;
 
-public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
+public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
+    private List<Task> tasks;
+    private OnTaskClickListener listener;
 
-    private OnTaskInteractionListener listener;
-
-    public interface OnTaskInteractionListener {
-        void onTaskCompleted(Task task, boolean isCompleted);
-        void onTaskDeleted(Task task);
-    }
-
-    public TaskAdapter(@NonNull DiffUtil.ItemCallback<Task> diffCallback, OnTaskInteractionListener listener) {
-        super(diffCallback);
+    public TaskAdapter(List<Task> tasks, OnTaskClickListener listener) {
+        this.tasks = tasks;
         this.listener = listener;
     }
 
@@ -34,15 +28,19 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        Task current = getItem(position);
-        holder.bind(current);
+        holder.bind(tasks.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return tasks.size();
     }
 
     class TaskViewHolder extends RecyclerView.ViewHolder {
-        private final TextView taskTitle;
-        private final TextView taskDescription;
-        private final CheckBox checkBoxCompleted;
-        private final Button buttonDelete;
+        private TextView taskTitle;
+        private TextView taskDescription;
+        private CheckBox checkBoxCompleted;
+        private Button buttonDelete;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -55,8 +53,14 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         public void bind(Task task) {
             taskTitle.setText(task.getTitle());
             taskDescription.setText(task.getDescription());
+
+            // Отключаем слушатель перед обновлением состояния, чтобы избежать неправильных вызовов
+            checkBoxCompleted.setOnCheckedChangeListener(null);
+
+            // Устанавливаем актуальное состояние чекбокса
             checkBoxCompleted.setChecked(task.isCompleted());
 
+            // После обновления состояния снова добавляем слушатель
             checkBoxCompleted.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 task.setCompleted(isChecked);
                 listener.onTaskCompleted(task, isChecked);
@@ -66,15 +70,8 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         }
     }
 
-    static class TaskDiff extends DiffUtil.ItemCallback<Task> {
-        @Override
-        public boolean areItemsTheSame(@NonNull Task oldItem, @NonNull Task newItem) {
-            return oldItem.getId() == newItem.getId();
-        }
-
-        @Override
-        public boolean areContentsTheSame(@NonNull Task oldItem, @NonNull Task newItem) {
-            return oldItem.equals(newItem);
-        }
+    public interface OnTaskClickListener {
+        void onTaskCompleted(Task task, boolean isChecked);
+        void onTaskDeleted(Task task);
     }
 }
