@@ -54,13 +54,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             taskTitle.setText(task.getTitle());
             taskDescription.setText(task.getDescription());
 
-            // Отключаем слушатель перед обновлением состояния, чтобы избежать неправильных вызовов
             checkBoxCompleted.setOnCheckedChangeListener(null);
 
-            // Устанавливаем актуальное состояние чекбокса
             checkBoxCompleted.setChecked(task.isCompleted());
 
-            // После обновления состояния снова добавляем слушатель
             checkBoxCompleted.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 task.setCompleted(isChecked);
                 listener.onTaskCompleted(task, isChecked);

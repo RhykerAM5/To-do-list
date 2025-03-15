@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(taskAdapter);
 
-        // Подписка на изменения в базе данных
         taskViewModel.getAllTasks().observe(this, tasks -> {
             taskList.clear();
             taskList.addAll(tasks);
